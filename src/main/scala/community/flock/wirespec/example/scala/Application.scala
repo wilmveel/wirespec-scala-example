@@ -1,37 +1,46 @@
 package community.flock.wirespec.example.scala
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import community.flock.wirespec.example.scala.generated.{Tag, _}
+import zio._
+import zio.http._
+import zio.json._
 
 import java.lang.reflect.Type
 import scala.language.higherKinds
-import zio._
-import zio.http._
-import generated._
 
 trait PetStoreClient[F[_]] extends AddPet[F] with UpdatePet[F]
 
+
 object Main extends ZIOAppDefault {
 
-  private val contentMapper: Wirespec.ContentMapper[String] = new Wirespec.ContentMapper[String] {
-    val objectMapper: ObjectMapper = new ObjectMapper()
-      .registerModule(DefaultScalaModule)
-      .registerModule(Json.jsonModule)
 
-    override def read[T](content: Wirespec.Content[String], valueType: Type): Wirespec.Content[T] = {
-      val `type` = objectMapper.constructType(valueType)
-      Wirespec.Content[T](content.`type`, objectMapper.readValue(content.body, `type`))
+  implicit val petStatusCodec: JsonCodec[PetStatus] = JsonCodec[PetStatus](
+    JsonEncoder[String].contramap[PetStatus](_.label),
+    JsonDecoder[String].mapOrFail[PetStatus] {
+      case PetStatus.SOLD.label => Right(PetStatus.SOLD)
+      case PetStatus.PENDING.label => Right(PetStatus.SOLD)
+      case PetStatus.AVAILABLE.label => Right(PetStatus.AVAILABLE)
+      case _ => Left(s"Cannot map PetStatus")
     }
+  )
+  implicit val categoryCodec: JsonCodec[Category] = DeriveJsonCodec.gen[Category]
+  implicit val tagCodec: JsonCodec[Tag] = DeriveJsonCodec.gen[Tag]
+  implicit val petCodec: JsonCodec[Pet] = DeriveJsonCodec.gen[Pet]
 
-    override def write[T](content: Wirespec.Content[T]): Wirespec.Content[String] = {
-      content.copy(body = objectMapper.writeValueAsString(content.body))
-    }
+  implicit val contentMapper: Wirespec.ContentMapper[String, Pet] = new Wirespec.ContentMapper[String, Pet] {
+    override def read(content: Wirespec.Content[String], valueType: Type): Wirespec.Content[Pet] = content.body.fromJson[Pet].fold(str =>
+      throw new IllegalArgumentException(str),
+      body => Wirespec.Content[Pet](content.`type`, body))
+
+    override def write(content: Wirespec.Content[Pet]): Wirespec.Content[String] = content.copy(body = content.body.toJson)
   }
 
-  private def handle[Req <: Wirespec.Request[_], Res <: Wirespec.Response[_]](request: Req, mapper: (Wirespec.ContentMapper[String], Int, Map[String, List[Any]], Wirespec.Content[String]) => Res): ZIO[Client, Throwable, Res] = {
+  private def handle[Req <: Wirespec.Request[_], Res <: Wirespec.Response[_]](request: Req, mapper: (Int, Map[String, List[Any]], Wirespec.Content[String]) => Res): ZIO[Client, Throwable, Res] = {
     val url = "https://petstore3.swagger.io/api/v3"
     val method = Method.fromString(request.method.label)
-    val content = contentMapper.write(request.content)
+    val content = request.content.body match {
+      case pet: Pet => Wirespec.Content[String](request.content.`type`, pet.toJson)
+    }
     val body = Body.fromString(content.body)
     val headers = Headers(Header.ContentType(MediaType.forContentType(content.`type`).orNull))
     val client = for {
@@ -39,7 +48,7 @@ object Main extends ZIOAppDefault {
       data <- res.body.asString
       headers = res.headers.map(x => x.headerName -> List(x.renderedValue)).toMap
       content = res.headers.get("Content-Type").map(`type` => Wirespec.Content(`type`, data)).orNull
-    } yield mapper(contentMapper, res.status.code, headers, content)
+    } yield mapper(res.status.code, headers, content)
     client
   }
 

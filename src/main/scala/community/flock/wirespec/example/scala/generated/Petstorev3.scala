@@ -1,6 +1,7 @@
 package community.flock.wirespec.example.scala.generated
 
 import scala.language.higherKinds
+
 trait AddPet[F[_]] {
   def addPet(request: AddPet.Request[_]): F[AddPet.Response[_]]
 }
@@ -18,14 +19,13 @@ object AddPet {
   class Response200ApplicationJson (override val headers: Map[String, List[Any]], body: Pet ) extends Response200[Pet] { override val status = 200; override val content = Wirespec.Content("application/json", body)}
   class Response405Unit (override val headers: Map[String, List[Any]] ) extends Response405[Unit] { override val status = 405; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]): Response[_] =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, Pet] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[Pet](content, Wirespec.getType(classOf[Pet], false)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], false)).body)
       }
       case (200, "application/json") => {
-        val c = contentMapper.read[Pet](content, Wirespec.getType(classOf[Pet], false))
-        new Response200ApplicationJson(headers, c.body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], false)).body)
       }
       case (405, null) => new Response405Unit(headers)
 
@@ -54,13 +54,13 @@ object UpdatePet {
   class Response404Unit (override val headers: Map[String, List[Any]] ) extends Response404[Unit] { override val status = 404; override val content = null}
   class Response405Unit (override val headers: Map[String, List[Any]] ) extends Response405[Unit] { override val status = 405; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, Pet] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[Pet](content, Wirespec.getType(classOf[Pet], false)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], false)).body)
       }
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[Pet](content, Wirespec.getType(classOf[Pet], false)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], false)).body)
       }
       case (400, null) => new Response400Unit(headers)
       case (404, null) => new Response404Unit(headers)
@@ -85,13 +85,13 @@ object FindPetsByStatus {
   class Response200ApplicationJson (override val headers: Map[String, List[Any]], body: List[Pet] ) extends Response200[List[Pet]] { override val status = 200; override val content = Wirespec.Content("application/json", body)}
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, List[Pet]] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[List[Pet]](content, Wirespec.getType(classOf[Pet], true)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], true)).body)
       }
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[List[Pet]](content, Wirespec.getType(classOf[Pet], true)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], true)).body)
       }
       case (400, null) => new Response400Unit(headers)
 
@@ -114,13 +114,13 @@ object FindPetsByTags {
   class Response200ApplicationJson (override val headers: Map[String, List[Any]], body: List[Pet] ) extends Response200[List[Pet]] { override val status = 200; override val content = Wirespec.Content("application/json", body)}
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, List[Pet]] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[List[Pet]](content, Wirespec.getType(classOf[Pet], true)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], true)).body)
       }
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[List[Pet]](content, Wirespec.getType(classOf[Pet], true)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], true)).body)
       }
       case (400, null) => new Response400Unit(headers)
 
@@ -145,13 +145,14 @@ object GetPetById {
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
   class Response404Unit (override val headers: Map[String, List[Any]] ) extends Response404[Unit] { override val status = 404; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, Pet] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[Pet](content, Wirespec.getType(classOf[Pet], false)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], false)).body)
       }
-      case (200, "application/json") => new Response200ApplicationJson(headers, contentMapper.read[Pet](content, Wirespec.getType(classOf[Pet], false)).body)
-
+      case (200, "application/json") => {
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[Pet], false)).body)
+      }
       case (400, null) => new Response400Unit(headers)
       case (404, null) => new Response404Unit(headers)
 
@@ -170,7 +171,7 @@ object UpdatePetWithForm {
   sealed trait Response405[T] extends Response4XX[T]
   class Response405Unit (override val headers: Map[String, List[Any]] ) extends Response405[Unit] { override val status = 405; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
     (status, content.`type`) match {
       case (405, null) => new Response405Unit(headers)
 
@@ -189,7 +190,7 @@ object DeletePet {
   sealed trait Response400[T] extends Response4XX[T]
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
     (status, content.`type`) match {
       case (400, null) => new Response400Unit(headers)
 
@@ -208,10 +209,10 @@ object UploadFile {
   sealed trait Response200[T] extends Response2XX[T]
   class Response200ApplicationJson (override val headers: Map[String, List[Any]], body: ApiResponse ) extends Response200[ApiResponse] { override val status = 200; override val content = Wirespec.Content("application/json", body)}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, ApiResponse] ) =
     (status, content.`type`) match {
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[ApiResponse](content, Wirespec.getType(classOf[ApiResponse], false)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[ApiResponse], false)).body)
       }
 
       case _ => throw new Exception(s"Cannot map response with status $status")
@@ -229,10 +230,10 @@ object GetInventory {
   sealed trait Response200[T] extends Response2XX[T]
   class Response200ApplicationJson (override val headers: Map[String, List[Any]], body: Map[String, Int] ) extends Response200[Map[String, Int]] { override val status = 200; override val content = Wirespec.Content("application/json", body)}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, Map[String, Int]] ) =
     (status, content.`type`) match {
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[Map[String, Int]](content, Wirespec.getType(classOf[Int], false)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[Int], false)).body)
       }
 
       case _ => throw new Exception(s"Cannot map response with status $status")
@@ -255,10 +256,10 @@ object PlaceOrder {
   class Response200ApplicationJson (override val headers: Map[String, List[Any]], body: Order ) extends Response200[Order] { override val status = 200; override val content = Wirespec.Content("application/json", body)}
   class Response405Unit (override val headers: Map[String, List[Any]] ) extends Response405[Unit] { override val status = 405; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, Order] ) =
     (status, content.`type`) match {
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[Order](content, Wirespec.getType(classOf[Order], false)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[Order], false)).body)
       }
       case (405, null) => new Response405Unit(headers)
 
@@ -283,13 +284,13 @@ object GetOrderById {
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
   class Response404Unit (override val headers: Map[String, List[Any]] ) extends Response404[Unit] { override val status = 404; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, Order] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[Order](content, Wirespec.getType(classOf[Order], false)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[Order], false)).body)
       }
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[Order](content, Wirespec.getType(classOf[Order], false)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[Order], false)).body)
       }
       case (400, null) => new Response400Unit(headers)
       case (404, null) => new Response404Unit(headers)
@@ -311,7 +312,7 @@ object DeleteOrder {
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
   class Response404Unit (override val headers: Map[String, List[Any]] ) extends Response404[Unit] { override val status = 404; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
     (status, content.`type`) match {
       case (400, null) => new Response400Unit(headers)
       case (404, null) => new Response404Unit(headers)
@@ -334,14 +335,14 @@ object CreateUser {
 
   class ResponseDefaultApplicationJson (override val status: Int, override val headers: Map[String, List[Any]], body: User ) extends ResponseDefault[User] { override val content = Wirespec.Content("application/json", body)}
   class ResponseDefaultApplicationXml (override val status: Int, override val headers: Map[String, List[Any]], body: User ) extends ResponseDefault[User] { override val content = Wirespec.Content("application/xml", body)}
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, User] ) =
     (status, content.`type`) match {
 
       case (_, "application/json") => {
-        new ResponseDefaultApplicationJson(status, headers, contentMapper.read[User](content, Wirespec.getType(classOf[User], false)).body)
+        new ResponseDefaultApplicationJson(status, headers, contentMapper.read(content, Wirespec.getType(classOf[User], false)).body)
       }
       case (_, "application/xml") => {
-        new ResponseDefaultApplicationXml(status, headers, contentMapper.read[User](content, Wirespec.getType(classOf[User], false)).body)
+        new ResponseDefaultApplicationXml(status, headers, contentMapper.read(content, Wirespec.getType(classOf[User], false)).body)
       }
       case _ => throw new Exception(s"Cannot map response with status $status")
     }
@@ -360,13 +361,13 @@ object CreateUsersWithListInput {
   class Response200ApplicationXml (override val headers: Map[String, List[Any]], body: User ) extends Response200[User] { override val status = 200; override val content = Wirespec.Content("application/xml", body)}
   class Response200ApplicationJson (override val headers: Map[String, List[Any]], body: User ) extends Response200[User] { override val status = 200; override val content = Wirespec.Content("application/json", body)}
   class ResponseDefaultUnit (override val status: Int, override val headers: Map[String, List[Any]] ) extends ResponseDefault[Unit] { override val content = null}
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, User] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[User](content, Wirespec.getType(classOf[User], false)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[User], false)).body)
       }
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[User](content, Wirespec.getType(classOf[User], false)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[User], false)).body)
       }
       case (_, null) => new ResponseDefaultUnit(status, headers)
       case _ => throw new Exception(s"Cannot map response with status $status")
@@ -388,13 +389,13 @@ object LoginUser {
   class Response200ApplicationJson (override val headers: Map[String, List[Any]], body: String ) extends Response200[String] { override val status = 200; override val content = Wirespec.Content("application/json", body)}
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, String] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[String](content, Wirespec.getType(classOf[String], false)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[String], false)).body)
       }
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[String](content, Wirespec.getType(classOf[String], false)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[String], false)).body)
       }
       case (400, null) => new Response400Unit(headers)
 
@@ -413,7 +414,7 @@ object LogoutUser {
 
 
   class ResponseDefaultUnit (override val status: Int, override val headers: Map[String, List[Any]] ) extends ResponseDefault[Unit] { override val content = null}
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
     (status, content.`type`) match {
 
       case (_, null) => new ResponseDefaultUnit(status, headers)
@@ -438,13 +439,13 @@ object GetUserByName {
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
   class Response404Unit (override val headers: Map[String, List[Any]] ) extends Response404[Unit] { override val status = 404; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B])( implicit contentMapper: Wirespec.ContentMapper[B, User] ) =
     (status, content.`type`) match {
       case (200, "application/xml") => {
-        new Response200ApplicationXml(headers, contentMapper.read[User](content, Wirespec.getType(classOf[User], false)).body)
+        new Response200ApplicationXml(headers, contentMapper.read(content, Wirespec.getType(classOf[User], false)).body)
       }
       case (200, "application/json") => {
-        new Response200ApplicationJson(headers, contentMapper.read[User](content, Wirespec.getType(classOf[User], false)).body)
+        new Response200ApplicationJson(headers, contentMapper.read(content, Wirespec.getType(classOf[User], false)).body)
       }
       case (400, null) => new Response400Unit(headers)
       case (404, null) => new Response404Unit(headers)
@@ -466,7 +467,7 @@ object UpdateUser {
 
 
   class ResponseDefaultUnit (override val status: Int, override val headers: Map[String, List[Any]] ) extends ResponseDefault[Unit] { override val content = null}
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
     (status, content.`type`) match {
 
       case (_, null) => new ResponseDefaultUnit(status, headers)
@@ -487,7 +488,7 @@ object DeleteUser {
   class Response400Unit (override val headers: Map[String, List[Any]] ) extends Response400[Unit] { override val status = 400; override val content = null}
   class Response404Unit (override val headers: Map[String, List[Any]] ) extends Response404[Unit] { override val status = 404; override val content = null}
 
-  def RESPONSE_MAPPER[B](contentMapper: Wirespec.ContentMapper[B], status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
+  def RESPONSE_MAPPER[B](status: Int, headers:Map[String, List[Any]], content: Wirespec.Content[B]) =
     (status, content.`type`) match {
       case (400, null) => new Response400Unit(headers)
       case (404, null) => new Response404Unit(headers)
@@ -504,13 +505,13 @@ object FindPetsByStatusParameterStatus {
 }
 
 case class Order(
-  val id: Option[Int],
-  val petId: Option[Int],
-  val quantity: Option[Int],
-  val shipDate: Option[String],
-  val status: Option[OrderStatus],
-  val complete: Option[Boolean]
-)
+                  val id: Option[Int],
+                  val petId: Option[Int],
+                  val quantity: Option[Int],
+                  val shipDate: Option[String],
+                  val status: Option[OrderStatus],
+                  val complete: Option[Boolean]
+                )
 
 
 sealed abstract class OrderStatus(val label: String)
@@ -521,66 +522,64 @@ object OrderStatus {
 }
 
 case class Customer(
-  val id: Option[Int],
-  val username: Option[String],
-  val address: Option[List[Address]]
-)
+                     val id: Option[Int],
+                     val username: Option[String],
+                     val address: Option[List[Address]]
+                   )
 
 
 case class Address(
-  val street: Option[String],
-  val city: Option[String],
-  val state: Option[String],
-  val zip: Option[String]
-)
+                    val street: Option[String],
+                    val city: Option[String],
+                    val state: Option[String],
+                    val zip: Option[String]
+                  )
 
 
 case class Category(
-  val id: Option[Int],
-  val name: Option[String]
-)
+                     val id: Option[Int],
+                     val name: Option[String]
+                   )
 
 
 case class User(
-  val id: Option[Int],
-  val username: Option[String],
-  val firstName: Option[String],
-  val lastName: Option[String],
-  val email: Option[String],
-  val password: Option[String],
-  val phone: Option[String],
-  val userStatus: Option[Int]
-)
+                 val id: Option[Int],
+                 val username: Option[String],
+                 val firstName: Option[String],
+                 val lastName: Option[String],
+                 val email: Option[String],
+                 val password: Option[String],
+                 val phone: Option[String],
+                 val userStatus: Option[Int]
+               )
 
 
 case class Tag(
-  val id: Option[Int],
-  val name: Option[String]
-)
+                val id: Option[Int],
+                val name: Option[String]
+              )
 
 
 case class Pet(
-  val id: Option[Int],
-  val name: String,
-  val category: Option[Category],
-  val photoUrls: List[String],
-  val tags: Option[List[Tag]],
-  val status: Option[PetStatus]
-)
+                val id: Option[Int],
+                val name: String,
+                val category: Option[Category],
+                val photoUrls: List[String],
+                val tags: Option[List[Tag]],
+                val status: Option[PetStatus]
+              )
 
 
-sealed abstract class PetStatus(val label: String) {
-  override def toString: String = label
-}
-object PetStatus extends Enumeration {
+sealed abstract class PetStatus(val label: String)
+object PetStatus {
   final case object AVAILABLE extends PetStatus(label = "available")
   final case object PENDING extends PetStatus(label = "pending")
   final case object SOLD extends PetStatus(label = "sold")
 }
 
 case class ApiResponse(
-  val code: Option[Int],
-  val `type`: Option[String],
-  val message: Option[String]
-)
+                        val code: Option[Int],
+                        val `type`: Option[String],
+                        val message: Option[String]
+                      )
 
