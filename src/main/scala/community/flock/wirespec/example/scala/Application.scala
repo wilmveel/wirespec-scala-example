@@ -13,7 +13,6 @@ trait PetStoreClient[F[_]] extends AddPet[F] with UpdatePet[F]
 
 object Main extends ZIOAppDefault {
 
-
   implicit val petStatusCodec: JsonCodec[PetStatus] = JsonCodec[PetStatus](
     JsonEncoder[String].contramap[PetStatus](_.label),
     JsonDecoder[String].mapOrFail[PetStatus] {
@@ -27,12 +26,14 @@ object Main extends ZIOAppDefault {
   implicit val tagCodec: JsonCodec[Tag] = DeriveJsonCodec.gen[Tag]
   implicit val petCodec: JsonCodec[Pet] = DeriveJsonCodec.gen[Pet]
 
-  implicit val contentMapper: Wirespec.ContentMapper[String, Pet] = new Wirespec.ContentMapper[String, Pet] {
-    override def read(content: Wirespec.Content[String], valueType: Type): Wirespec.Content[Pet] = content.body.fromJson[Pet].fold(str =>
-      throw new IllegalArgumentException(str),
-      body => Wirespec.Content[Pet](content.`type`, body))
 
-    override def write(content: Wirespec.Content[Pet]): Wirespec.Content[String] = content.copy(body = content.body.toJson)
+  implicit def contentMapper[T: JsonCodec]: Wirespec.ContentMapper[String, T] = new Wirespec.ContentMapper[String, T] {
+    override def read(content: Wirespec.Content[String], valueType: Type): Wirespec.Content[T] =
+      content.body.fromJson[T].fold(str =>
+        throw new IllegalArgumentException(str),
+        body => Wirespec.Content[T](content.`type`, body))
+
+    override def write(content: Wirespec.Content[T]): Wirespec.Content[String] = content.copy(body = content.body.toJson)
   }
 
   private def handle[Req <: Wirespec.Request[_], Res <: Wirespec.Response[_]](request: Req, mapper: (Int, Map[String, List[Any]], Wirespec.Content[String]) => Res): ZIO[Client, Throwable, Res] = {
@@ -76,6 +77,5 @@ object Main extends ZIOAppDefault {
     }
 
     res.map(x => println(x))
-
   }
 }
